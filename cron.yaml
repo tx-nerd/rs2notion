@@ -1,0 +1,4 @@
+cron:
+  - name: repairshopr-ticket-poll
+    schedule: "*/30 * * * *"
+    command: "python3 repairshopr_pull.py"
