@@ -21,8 +21,7 @@ jobs:
         run: pip install requests
 
       - name: Run sync script
-        env:
-          RS_API_KEY: ${{ secrets.RS_API_KEY }}
-          NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
-          NOTION_TM_DB_ID: ${{ secrets.NOTION_TM_DB_ID }}
-        run: python repairshopr_pull.py
+      env:
+        RS_API_KEY: ${{ secrets.RS_API_KEY }}
+        MAKE_WEBHOOK_URL: ${{ secrets.MAKE_WEBHOOK_URL }}
+      run: python repairshopr_pull.py
