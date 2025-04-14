@@ -1,6 +1,7 @@
 import requests
 import os
 from datetime import datetime
+print(f"DEBUG: MAKE_WEBHOOK_URL = {MAKE_WEBHOOK_URL}")
 
 # Environment variables (set in GitHub Secrets)
 RS_API_KEY = os.getenv("RS_API_KEY")
