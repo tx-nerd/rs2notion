@@ -6,7 +6,7 @@ from datetime import datetime
 RS_API_KEY = os.getenv("RS_API_KEY")
 RS_BASE_URL = "https://txnerd.repairshopr.com/api/v1"
 NOTION_API_KEY = os.getenv("NOTION_API_KEY")
-NOTION_DATABASE_ID = os.getenv("NOTION_DATABASE_ID")
+NOTION_DATABASE_ID = os.getenv("NOTION_TM_DB_ID")
 
 def fetch_tickets():
     headers = {"Authorization": f"Bearer {RS_API_KEY}"}
