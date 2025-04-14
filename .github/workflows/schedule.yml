@@ -1,7 +1,8 @@
 name: RepairShopr to Notion Sync
 
 on:
-  workflow_dispatch:  # ✅ enables manual run button
+  # ✅ enables manual run button
+  workflow_dispatch:
   schedule:
     - cron: '*/15 * * * *'
 
@@ -21,7 +22,7 @@ jobs:
         run: pip install requests
 
       - name: Run sync script
-      env:
-        RS_API_KEY: ${{ secrets.RS_API_KEY }}
-        MAKE_WEBHOOK_URL: ${{ secrets.MAKE_WEBHOOK_URL }}
-      run: python repairshopr_pull.py
+        env:
+          RS_API_KEY: ${{ secrets.RS_API_KEY }}
+          MAKE_WEBHOOK_URL: ${{ secrets.MAKE_WEBHOOK_URL }}
+        run: python repairshopr_pull.py
