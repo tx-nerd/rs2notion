@@ -1,56 +1,72 @@
-# 🛠️ RepairShopr → Notion Integration
+🛠 RepairShopr to Notion Sync Script
 
-This script automates syncing tickets from **RepairShopr** into your **Notion Task Manager theme** using a Make.com webhook.
+This Python script pulls ticket data from RepairShopr and sends it to a Make.com webhook. It supports selective syncing, avoids duplicates, and is easy to toggle based on your workflow.
 
----
+✅ Features
 
-## ✅ What It Does
+Pulls new tickets since the last sync or optionally fetches the latest 50 tickets.
 
-- Pulls tickets from your RepairShopr instance
-- Converts them into Notion tasks via webhook
-- Uses the ticket's `subject` and `due_date` (or fallback `created_at`)
-- Enriches each task with:
-  - Customer name, email, phone
-  - Location, ticket type, assigned tech
-  - Problem type, status, custom fields
+Sends enriched ticket data to Make.com.
 
----
+Logs ticket IDs to avoid duplicates.
 
-## ⚙️ Setup Instructions
+📦 Installation
 
-### 1. **Environment Variables**
-Set these in your GitHub Actions secrets or `.env`:
-- `RS_API_KEY` – Your RepairShopr API key
-- `MAKE_WEBHOOK_URL` – Your custom webhook from Make
+Clone your repository and install the required Python packages:
 
-### 2. **Install Dependencies**
-```bash
 pip install -r requirements.txt
-```
 
-### 3. **Run via GitHub Actions**
-This runs every 15 minutes, and can be manually triggered.
+Create a .env file at the root of your project with these variables:
 
-```yaml
-# .github/workflows/schedule.yml
-on:
-  workflow_dispatch:
-  schedule:
-    - cron: '*/15 * * * *'
-```
+RS_API_KEY=your_repairshopr_api_key
+MAKE_WEBHOOK_URL=https://hook.make.com/your-make-webhook-url
 
----
+⚙️ Configuration Flags (In Code)
 
-## 🧠 Sync Behavior
+In repairshopr_pull.py, you can toggle these flags manually:
 
-- Avoids duplicates using a Make search filter before insert
-- Pulls **last 100 hours** if `last_sync.txt` doesn’t exist
-- Respects `due_date` if present; falls back to `created_at`
-- Stores last sync time in `last_sync.txt` (auto-created on first run)
+FORCE_SYNC = False      # ⬅️ Set to True to ignore last sync timestamp and re-pull everything
+FORCE_LAST_50 = True    # ⬅️ Set to True to pull the latest 50 tickets regardless of time
 
----
+You can use them together to re-pull the latest 50 tickets from scratch.
 
-## 📌 Coming Soon
-- Two-way sync back to RepairShopr
-- Customer & invoice creation
-- Persistent job queue for failed sends
+🧪 Usage
+
+Run the script directly:
+
+python repairshopr_pull.py
+
+This will:
+
+Use the last timestamp (unless FORCE_SYNC is enabled).
+
+Optionally fetch only the latest 50 tickets (FORCE_LAST_50).
+
+Hydrate full ticket data.
+
+Send payload to Make.com.
+
+Log sent IDs and update the sync timestamp.
+
+🔍 Make.com Webhook Setup
+
+Create a Make scenario with a custom webhook.
+
+Copy the URL and paste it into your .env under MAKE_WEBHOOK_URL.
+
+Map the payload fields inside Make to your Notion or desired action.
+
+🚀 Git Push Workflow
+
+This repo is designed for live use. Update repairshopr_pull.py locally, commit, then push live:
+
+git add repairshopr_pull.py
+git commit -m "Update flags or logic"
+git push origin main
+
+🔧 Example Output
+
+⏱️ Last sync: 2025-04-20T15:44:00Z (FORCE_SYNC=False)
+🚨 FORCE_LAST_50 is enabled -- pulling latest 50 tickets instead of using sync window
+🧪 Hydrated Ticket #94032833 Data: {...}
+📤 Sent ticket #23527 to Make
