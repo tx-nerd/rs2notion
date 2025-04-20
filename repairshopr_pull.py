@@ -64,27 +64,23 @@ def send_to_make(ticket):
             parsed = parser.isoparse(raw_date).date()
             due_date_clean = parsed.isoformat()
         except Exception as e:
-            print(f"⚠️ Could not parse date for ticket #{ticket['id']}: {e}")
+            print(f"⚠️ Could not parse date for ticket #{ticket['number']}: {e}")
 
-    ticket_type_name = None
-    if isinstance(ticket.get("ticket_type"), dict):
-        ticket_type_name = ticket["ticket_type"].get("name")
+    customer = ticket.get("customer", {})
+    customer_first = customer.get("firstname", "")
+    customer_last = customer.get("lastname", "")
 
     payload = {
-        "id": ticket["id"],
         "number": ticket.get("number"),
-        "subject": ticket["subject"],
-        "status": ticket["status"],
+        "subject": ticket.get("subject"),
         "due_date": due_date_clean,
         "ticket_url": f"{RS_TICKET_URL_BASE}{ticket.get('number')}",
-        "ticket_type": ticket_type_name,
-        "customer_name": ticket.get("customer", {}).get("name"),
-        "customer_email": ticket.get("customer", {}).get("email"),
-        "customer_phone": ticket.get("customer", {}).get("phone"),
+        "customer_firstname": customer_first,
+        "customer_lastname": customer_last,
+        "customer_phone": customer.get("phone"),
         "assigned_to": ticket.get("assigned_user_name"),
         "location": ticket.get("location", {}).get("name"),
         "created_at": ticket.get("created_at"),
-        "updated_at": ticket.get("updated_at"),
         "problem_type": ticket.get("problem_type"),
         "custom_fields": ticket.get("custom_fields")
     }
