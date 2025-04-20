@@ -1,6 +1,6 @@
 import requests
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from dateutil import parser
 
 RS_API_KEY = os.getenv("RS_API_KEY")
@@ -10,9 +10,9 @@ SYNC_FILE = "last_sync.txt"
 
 def read_last_sync():
     if not os.path.exists(SYNC_FILE):
-        return datetime.utcnow() - timedelta(hours=3)
+        return datetime.now(timezone.utc) - timedelta(hours=3)
     with open(SYNC_FILE, "r") as f:
-        return datetime.fromisoformat(f.read().strip())
+        return datetime.fromisoformat(f.read().strip()).astimezone(timezone.utc)
 
 def write_last_sync(ts: datetime):
     with open(SYNC_FILE, "w") as f:
@@ -26,7 +26,7 @@ def fetch_tickets(since_time: datetime):
     return [
         t for t in all_tickets
         if t.get("created_at")
-        and parser.isoparse(t["created_at"]) > since_time
+        and parser.isoparse(t["created_at"]).astimezone(timezone.utc) > since_time
         and t.get("status") != "Resolved"
     ]
 
@@ -66,7 +66,7 @@ def main():
     for ticket in tickets:
         send_to_make(ticket)
 
-    write_last_sync(datetime.utcnow())
+    write_last_sync(datetime.now(timezone.utc))
 
 if __name__ == "__main__":
     main()
