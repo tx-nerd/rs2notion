@@ -24,4 +24,6 @@ jobs:
         env:
           RS_API_KEY: ${{ secrets.RS_API_KEY }}
           MAKE_WEBHOOK_URL: ${{ secrets.MAKE_WEBHOOK_URL }}
+          FORCE_SYNC: true
+
         run: python repairshopr_pull.py
