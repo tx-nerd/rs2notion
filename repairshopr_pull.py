@@ -60,7 +60,9 @@ def hydrate_ticket(ticket_id):
     headers = {"Authorization": f"Bearer {RS_API_KEY}"}
     response = requests.get(f"{RS_BASE_URL}/tickets/{ticket_id}", headers=headers)
     response.raise_for_status()
-    return response.json().get("ticket", {})
+    ticket_data = response.json().get("ticket", {})
+    print(f"🧪 Hydrated Ticket #{ticket_id} Data:", ticket_data)
+    return ticket_data
 
 def send_to_make(ticket):
     raw_date = ticket.get("due_date") or ticket.get("created_at")
