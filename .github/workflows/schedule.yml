@@ -1,9 +1,9 @@
 name: RepairShopr to Notion Sync
 
 on:
-  workflow_dispatch:
+  workflow_dispatch:          # ✅ manual run
   schedule:
-    - cron: '*/15 * * * *'
+    - cron: '*/15 * * * *'     # ✅ every 15 minutes
 
 jobs:
   sync:
