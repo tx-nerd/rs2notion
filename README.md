@@ -1,22 +1,56 @@
-# RepairShopr → Notion Integration (Step 1)
+# 🛠️ RepairShopr → Notion Integration
 
-## What it does:
-- Pulls tickets from RepairShopr
-- Converts them into tasks in your Notion "Task Manager" theme
-- Uses ticket subject as the title and due_date (or created date) as the task's due date
+This script automates syncing tickets from **RepairShopr** into your **Notion Task Manager theme** using a Make.com webhook.
 
-## Setup Instructions:
-1. Set environment variables in Render or .env:
-   - `RS_API_KEY`
-   - `NOTION_API_KEY`
-   - `NOTION_DATABASE_ID`
+---
 
-2. Adjust the RepairShopr subdomain and Notion DB fields if necessary.
+## ✅ What It Does
 
-3. Deploy on Render as a Background Worker using `cron.yaml`.
+- Pulls tickets from your RepairShopr instance
+- Converts them into Notion tasks via webhook
+- Uses the ticket's `subject` and `due_date` (or fallback `created_at`)
+- Enriches each task with:
+  - Customer name, email, phone
+  - Location, ticket type, assigned tech
+  - Problem type, status, custom fields
 
-## Notes:
-- This script avoids creating duplicate tasks. Future versions should check Notion for existing tickets first.
-- Runs every 30 minutes.
+---
 
-More steps coming soon: syncing customers, invoices, and webhook handling.
+## ⚙️ Setup Instructions
+
+### 1. **Environment Variables**
+Set these in your GitHub Actions secrets or `.env`:
+- `RS_API_KEY` – Your RepairShopr API key
+- `MAKE_WEBHOOK_URL` – Your custom webhook from Make
+
+### 2. **Install Dependencies**
+```bash
+pip install -r requirements.txt
+```
+
+### 3. **Run via GitHub Actions**
+This runs every 15 minutes, and can be manually triggered.
+
+```yaml
+# .github/workflows/schedule.yml
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '*/15 * * * *'
+```
+
+---
+
+## 🧠 Sync Behavior
+
+- Avoids duplicates using a Make search filter before insert
+- Pulls **last 100 hours** if `last_sync.txt` doesn’t exist
+- Respects `due_date` if present; falls back to `created_at`
+- Stores last sync time in `last_sync.txt` (auto-created on first run)
+
+---
+
+## 📌 Coming Soon
+- Two-way sync back to RepairShopr
+- Customer & invoice creation
+- Persistent job queue for failed sends
