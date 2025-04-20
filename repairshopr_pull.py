@@ -56,6 +56,12 @@ def fetch_tickets(since_time: datetime):
 
     return [t for t in all_tickets if t.get("status") != "Resolved"]
 
+def hydrate_ticket(ticket_id):
+    headers = {"Authorization": f"Bearer {RS_API_KEY}"}
+    response = requests.get(f"{RS_BASE_URL}/tickets/{ticket_id}", headers=headers)
+    response.raise_for_status()
+    return response.json().get("ticket", {})
+
 def send_to_make(ticket):
     raw_date = ticket.get("due_date") or ticket.get("created_at")
     due_date_clean = None
@@ -85,6 +91,8 @@ def send_to_make(ticket):
         "custom_fields": ticket.get("custom_fields")
     }
 
+    print("🔍 Payload:", payload)
+
     try:
         response = requests.post(MAKE_WEBHOOK_URL, json=payload)
         response.raise_for_status()
@@ -106,7 +114,8 @@ def main():
         if ticket_id in seen_ids:
             continue
 
-        if send_to_make(ticket):
+        hydrated = hydrate_ticket(ticket["id"])
+        if send_to_make(hydrated):
             new_ids.add(ticket_id)
 
     save_seen_ids(new_ids)
