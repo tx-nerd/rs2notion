@@ -12,9 +12,12 @@ FORCE_SYNC = os.getenv("FORCE_SYNC", "false").lower() == "true"
 
 RS_TICKET_URL_BASE = "https://txnerd.repairshopr.com/tickets/"
 
+DEFAULT_SYNC_HOURS = 100
+
+
 def read_last_sync():
     if FORCE_SYNC or not os.path.exists(SYNC_FILE):
-        return datetime.now(timezone.utc) - timedelta(hours=100)
+        return datetime.now(timezone.utc) - timedelta(hours=DEFAULT_SYNC_HOURS)
     with open(SYNC_FILE, "r") as f:
         return datetime.fromisoformat(f.read().strip()).astimezone(timezone.utc)
 
@@ -78,6 +81,17 @@ def send_to_make(ticket):
     customer_first = customer.get("firstname", "")
     customer_last = customer.get("lastname", "")
 
+    assigned = ticket.get("assigned_user_name")
+    location = ticket.get("location", {}).get("name")
+    custom_fields = ticket.get("custom_fields")
+
+    if not assigned:
+        print(f"⚠️ Missing assigned_to for ticket #{ticket.get('number')}")
+    if not location:
+        print(f"⚠️ Missing location for ticket #{ticket.get('number')}")
+    if not custom_fields:
+        print(f"⚠️ Missing custom_fields for ticket #{ticket.get('number')}")
+
     payload = {
         "number": ticket.get("number"),
         "subject": ticket.get("subject"),
@@ -86,11 +100,11 @@ def send_to_make(ticket):
         "customer_firstname": customer_first,
         "customer_lastname": customer_last,
         "customer_phone": customer.get("phone"),
-        "assigned_to": ticket.get("assigned_user_name"),
-        "location": ticket.get("location", {}).get("name"),
+        "assigned_to": assigned,
+        "location": location,
         "created_at": ticket.get("created_at"),
         "problem_type": ticket.get("problem_type"),
-        "custom_fields": ticket.get("custom_fields")
+        "custom_fields": custom_fields
     }
 
     print("🔍 Payload:", payload)
