@@ -14,7 +14,6 @@ RS_TICKET_URL_BASE = "https://txnerd.repairshopr.com/tickets/"
 
 DEFAULT_SYNC_HOURS = 100
 
-
 def read_last_sync():
     if FORCE_SYNC or not os.path.exists(SYNC_FILE):
         return datetime.now(timezone.utc) - timedelta(hours=DEFAULT_SYNC_HOURS)
@@ -40,7 +39,7 @@ def fetch_tickets(since_time: datetime):
     headers = {"Authorization": f"Bearer {RS_API_KEY}"}
     page = 1
     all_tickets = []
-    created_after = since_time.date().isoformat()
+    created_after = since_time.isoformat()
 
     while True:
         params = {
@@ -77,34 +76,36 @@ def send_to_make(ticket):
         except Exception as e:
             print(f"⚠️ Could not parse date for ticket #{ticket['number']}: {e}")
 
-    customer = ticket.get("customer", {})
-    customer_first = customer.get("firstname", "")
-    customer_last = customer.get("lastname", "")
-
     assigned = ticket.get("assigned_user_name")
     location = ticket.get("location", {}).get("name")
-    custom_fields = ticket.get("custom_fields")
 
     if not assigned:
         print(f"⚠️ Missing assigned_to for ticket #{ticket.get('number')}")
     if not location:
         print(f"⚠️ Missing location for ticket #{ticket.get('number')}")
-    if not custom_fields:
-        print(f"⚠️ Missing custom_fields for ticket #{ticket.get('number')}")
+
+    customer = ticket.get("customer", {})
+    customer_firstname = customer.get("firstname")
+    customer_lastname = customer.get("lastname")
+    customer_phone = customer.get("phone") or customer.get("mobile")
+
+    if not customer_firstname:
+        print(f"⚠️ Missing customer firstname for ticket #{ticket.get('number')}")
+    if not customer_phone:
+        print(f"⚠️ Missing customer phone for ticket #{ticket.get('number')}")
 
     payload = {
         "number": ticket.get("number"),
         "subject": ticket.get("subject"),
         "due_date": due_date_clean,
         "ticket_url": f"{RS_TICKET_URL_BASE}{ticket.get('number')}",
-        "customer_firstname": customer_first,
-        "customer_lastname": customer_last,
-        "customer_phone": customer.get("phone"),
+        "customer_firstname": customer_firstname,
+        "customer_lastname": customer_lastname,
+        "customer_phone": customer_phone,
         "assigned_to": assigned,
         "location": location,
         "created_at": ticket.get("created_at"),
-        "problem_type": ticket.get("problem_type"),
-        "custom_fields": custom_fields
+        "problem_type": ticket.get("problem_type")
     }
 
     print("🔍 Payload:", payload)
