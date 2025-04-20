@@ -20,15 +20,26 @@ def write_last_sync(ts: datetime):
 
 def fetch_tickets(since_time: datetime):
     headers = {"Authorization": f"Bearer {RS_API_KEY}"}
-    response = requests.get(f"{RS_BASE_URL}/tickets", headers=headers)
-    response.raise_for_status()
-    all_tickets = response.json().get("tickets", [])
-    return [
-        t for t in all_tickets
-        if t.get("created_at")
-        and parser.isoparse(t["created_at"]).astimezone(timezone.utc) > since_time
-        and t.get("status") != "Resolved"
-    ]
+    page = 1
+    all_tickets = []
+    created_after = since_time.date().isoformat()
+
+    while True:
+        params = {
+            "created_after": created_after,
+            "page": page
+        }
+        response = requests.get(f"{RS_BASE_URL}/tickets", headers=headers, params=params)
+        response.raise_for_status()
+        tickets = response.json().get("tickets", [])
+
+        if not tickets:
+            break
+
+        all_tickets.extend(tickets)
+        page += 1
+
+    return [t for t in all_tickets if t.get("status") != "Resolved"]
 
 def send_to_make(ticket):
     raw_date = ticket.get("due_date") or ticket.get("created_at")
