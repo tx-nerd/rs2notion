@@ -10,7 +10,6 @@ SYNC_FILE = "last_sync.txt"
 
 def read_last_sync():
     if not os.path.exists(SYNC_FILE):
-        # Default to 3 hours ago if no sync file exists
         return datetime.utcnow() - timedelta(hours=3)
     with open(SYNC_FILE, "r") as f:
         return datetime.fromisoformat(f.read().strip())
@@ -32,11 +31,14 @@ def fetch_tickets(since_time: datetime):
     ]
 
 def send_to_make(ticket):
+    raw_date = ticket.get("due_date") or ticket.get("created_at")
+    due_date_clean = raw_date.split("T")[0] if raw_date else None
+
     payload = {
         "id": ticket["id"],
         "subject": ticket["subject"],
         "status": ticket["status"],
-        "due_date": ticket.get("due_date"),
+        "due_date": due_date_clean,
         "customer_name": ticket.get("customer", {}).get("name"),
         "customer_email": ticket.get("customer", {}).get("email"),
         "customer_phone": ticket.get("customer", {}).get("phone"),
@@ -64,7 +66,6 @@ def main():
     for ticket in tickets:
         send_to_make(ticket)
 
-    # Save sync timestamp after all tickets have been processed
     write_last_sync(datetime.utcnow())
 
 if __name__ == "__main__":
