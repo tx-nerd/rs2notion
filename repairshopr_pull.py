@@ -8,10 +8,12 @@ RS_BASE_URL = "https://txnerd.repairshopr.com/api/v1"
 MAKE_WEBHOOK_URL = os.getenv("MAKE_WEBHOOK_URL")
 SYNC_FILE = "last_sync.txt"
 SEEN_IDS_FILE = "seen_ticket_ids.txt"
-FORCE_SYNC = os.getenv("FORCE_SYNC", "false").lower() == "true"
+
+# ✅ Manual toggle flags
+FORCE_SYNC = True  # ⬅️ Flip this to True to ignore last sync timestamp and refresh everything
+FORCE_LAST_50 = True  # ⬅️ Flip this to False to return to pulling tickets from last 100 hours
 
 RS_TICKET_URL_BASE = "https://txnerd.repairshopr.com/tickets/"
-
 DEFAULT_SYNC_HOURS = 100
 
 def read_last_sync():
@@ -39,6 +41,15 @@ def fetch_tickets(since_time: datetime):
     headers = {"Authorization": f"Bearer {RS_API_KEY}"}
     page = 1
     all_tickets = []
+
+    if FORCE_LAST_50:
+        print("🚨 FORCE_LAST_50 is enabled -- pulling latest 50 tickets instead of using sync window")
+        params = {"per_page": 50, "sort": "created_at", "sort_direction": "desc"}
+        response = requests.get(f"{RS_BASE_URL}/tickets", headers=headers, params=params)
+        response.raise_for_status()
+        tickets = response.json().get("tickets", [])
+        return [t for t in tickets if t.get("status") != "Resolved"]
+
     created_after = since_time.isoformat()
 
     while True:
