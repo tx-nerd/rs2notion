@@ -10,7 +10,7 @@ SYNC_FILE = "last_sync.txt"
 
 def read_last_sync():
     if not os.path.exists(SYNC_FILE):
-        return datetime.now(timezone.utc) - timedelta(hours=3)
+        return datetime.now(timezone.utc) - timedelta(hours=100)
     with open(SYNC_FILE, "r") as f:
         return datetime.fromisoformat(f.read().strip()).astimezone(timezone.utc)
 
@@ -32,7 +32,13 @@ def fetch_tickets(since_time: datetime):
 
 def send_to_make(ticket):
     raw_date = ticket.get("due_date") or ticket.get("created_at")
-    due_date_clean = raw_date.split("T")[0] if raw_date else None
+    due_date_clean = None
+    if raw_date:
+        try:
+            parsed = parser.isoparse(raw_date).date()
+            due_date_clean = parsed.isoformat()
+        except Exception as e:
+            print(f"⚠️ Could not parse date for ticket #{ticket['id']}: {e}")
 
     payload = {
         "id": ticket["id"],
