@@ -48,8 +48,8 @@ def fetch_tickets(since_time: datetime):
     all_tickets = []
 
     if FORCE_LAST_50:
-        print("🚨 FORCE_LAST_50 is enabled -- fetching 3 pages and sorting")
-        while page <= 3:
+        print("🚨 FORCE_LAST_50 is enabled -- fetching until 50 recent tickets are collected")
+        while True:
             params = {
                 "page": page,
                 "per_page": 50,
@@ -60,9 +60,14 @@ def fetch_tickets(since_time: datetime):
             response.raise_for_status()
             result = response.json()
             page_tickets = result.get("tickets") or result
-            all_tickets.extend(page_tickets)
-            if len(page_tickets) < 50:
+            if not page_tickets:
                 break
+
+            all_tickets.extend(page_tickets)
+
+            if len(all_tickets) >= 50:
+                break
+
             page += 1
 
         all_tickets.sort(key=lambda t: t.get("created_at", ""), reverse=True)
