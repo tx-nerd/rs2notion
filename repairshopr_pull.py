@@ -10,7 +10,7 @@ SYNC_FILE = "last_sync.txt"
 SEEN_IDS_FILE = "seen_ticket_ids.txt"
 
 # ✅ Manual toggle flags
-FORCE_SYNC = True  # ⬅️ Flip this to True to ignore last sync timestamp and refresh everything
+FORCE_SYNC = False  # ⬅️ Flip this to True to ignore last sync timestamp and refresh everything
 FORCE_LAST_50 = True  # ⬅️ Flip this to False to return to pulling tickets from last 100 hours
 
 RS_TICKET_URL_BASE = "https://txnerd.repairshopr.com/tickets/"
@@ -48,7 +48,7 @@ def fetch_tickets(since_time: datetime):
         response = requests.get(f"{RS_BASE_URL}/tickets", headers=headers, params=params)
         response.raise_for_status()
         tickets = response.json().get("tickets", [])
-        return [t for t in tickets if t.get("status") != "Resolved"]
+        return tickets
 
     created_after = since_time.isoformat()
 
@@ -67,7 +67,7 @@ def fetch_tickets(since_time: datetime):
         all_tickets.extend(tickets)
         page += 1
 
-    return [t for t in all_tickets if t.get("status") != "Resolved"]
+    return all_tickets
 
 def hydrate_ticket(ticket_id):
     headers = {"Authorization": f"Bearer {RS_API_KEY}"}
