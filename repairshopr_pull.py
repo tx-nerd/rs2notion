@@ -16,15 +16,18 @@ FORCE_LAST_50 = True  # ⬅️ Flip this to False to return to pulling tickets f
 RS_TICKET_URL_BASE = "https://txnerd.repairshopr.com/tickets/"
 DEFAULT_SYNC_HOURS = 100
 
+
 def read_last_sync():
     if FORCE_SYNC or not os.path.exists(SYNC_FILE):
         return datetime.now(timezone.utc) - timedelta(hours=DEFAULT_SYNC_HOURS)
     with open(SYNC_FILE, "r") as f:
         return datetime.fromisoformat(f.read().strip()).astimezone(timezone.utc)
 
+
 def write_last_sync(ts: datetime):
     with open(SYNC_FILE, "w") as f:
         f.write(ts.isoformat())
+
 
 def load_seen_ids():
     if FORCE_SYNC or not os.path.exists(SEEN_IDS_FILE):
@@ -32,10 +35,12 @@ def load_seen_ids():
     with open(SEEN_IDS_FILE, "r") as f:
         return set(line.strip() for line in f if line.strip().isdigit())
 
+
 def save_seen_ids(ids):
     with open(SEEN_IDS_FILE, "w") as f:
         for tid in sorted(ids):
             f.write(f"{tid}\n")
+
 
 def fetch_tickets(since_time: datetime):
     headers = {"Authorization": f"Bearer {RS_API_KEY}"}
@@ -53,7 +58,8 @@ def fetch_tickets(since_time: datetime):
             }
             response = requests.get(f"{RS_BASE_URL}/tickets", headers=headers, params=params)
             response.raise_for_status()
-            page_tickets = response.json().get("tickets", [])
+            result = response.json()
+            page_tickets = result.get("tickets") or result
             all_tickets.extend(page_tickets)
             if len(page_tickets) < 50:
                 break
@@ -75,6 +81,7 @@ def fetch_tickets(since_time: datetime):
 
     return all_tickets
 
+
 def hydrate_ticket(ticket_id):
     headers = {"Authorization": f"Bearer {RS_API_KEY}"}
     response = requests.get(f"{RS_BASE_URL}/tickets/{ticket_id}", headers=headers)
@@ -82,6 +89,7 @@ def hydrate_ticket(ticket_id):
     ticket_data = response.json().get("ticket", {})
     print(f"🧪 Hydrated Ticket #{ticket_id} Data:", ticket_data)
     return ticket_data
+
 
 def send_to_make(ticket):
     raw_date = ticket.get("due_date") or ticket.get("created_at")
@@ -136,6 +144,7 @@ def send_to_make(ticket):
         print(f"⚠️ Failed to send ticket #{ticket['number']}: {e}")
         return False
 
+
 def main():
     last_sync = read_last_sync()
     print(f"⏱️ Last sync: {last_sync.isoformat()} (FORCE_SYNC={FORCE_SYNC})")
@@ -154,6 +163,7 @@ def main():
 
     save_seen_ids(new_ids)
     write_last_sync(datetime.now(timezone.utc))
+
 
 if __name__ == "__main__":
     main()
