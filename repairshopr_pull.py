@@ -43,27 +43,33 @@ def fetch_tickets(since_time: datetime):
     all_tickets = []
 
     if FORCE_LAST_50:
-        print("🚨 FORCE_LAST_50 is enabled -- pulling latest 50 tickets instead of using sync window")
-        params = {"per_page": 50, "sort": "created_at", "sort_direction": "desc"}
-        response = requests.get(f"{RS_BASE_URL}/tickets", headers=headers, params=params)
-        response.raise_for_status()
-        tickets = response.json().get("tickets", [])
-        return tickets
+        print("🚨 FORCE_LAST_50 is enabled -- fetching 3 pages and sorting")
+        while page <= 3:
+            params = {
+                "page": page,
+                "per_page": 50,
+                "sort[column]": "created_at",
+                "sort[direction]": "desc"
+            }
+            response = requests.get(f"{RS_BASE_URL}/tickets", headers=headers, params=params)
+            response.raise_for_status()
+            page_tickets = response.json().get("tickets", [])
+            all_tickets.extend(page_tickets)
+            if len(page_tickets) < 50:
+                break
+            page += 1
+
+        all_tickets.sort(key=lambda t: t.get("created_at", ""), reverse=True)
+        return all_tickets[:50]
 
     created_after = since_time.isoformat()
-
     while True:
-        params = {
-            "created_after": created_after,
-            "page": page
-        }
+        params = {"created_after": created_after, "page": page}
         response = requests.get(f"{RS_BASE_URL}/tickets", headers=headers, params=params)
         response.raise_for_status()
         tickets = response.json().get("tickets", [])
-
         if not tickets:
             break
-
         all_tickets.extend(tickets)
         page += 1
 
