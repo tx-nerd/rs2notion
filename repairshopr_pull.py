@@ -70,7 +70,13 @@ def fetch_tickets(since_time: datetime):
 
     created_after = since_time.isoformat()
     while True:
-        params = {"created_after": created_after, "page": page}
+        params = {
+            "created_after": created_after,
+            "page": page,
+            "per_page": 50,
+            "sort[column]": "created_at",
+            "sort[direction]": "desc"
+        }
         response = requests.get(f"{RS_BASE_URL}/tickets", headers=headers, params=params)
         response.raise_for_status()
         tickets = response.json().get("tickets", [])
